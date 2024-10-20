@@ -16,8 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TaskPriorityTest {
 
-    private TaskService service;
-    private TaskRepository repository;
+    private  TaskService service;
+    private  TaskRepository repository;
 
     @BeforeEach
     void setup(){
