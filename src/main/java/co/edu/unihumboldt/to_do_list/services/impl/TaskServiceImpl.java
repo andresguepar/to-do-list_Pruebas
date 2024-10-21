@@ -29,7 +29,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public List<TaskDto> list() {
-        List<Task> Task = (List<Task>) repository.findAll();
+        List<Task> Task = repository.findAll();
         return TaskMapper.mapFromDto(Task);
     }
 
@@ -41,6 +41,17 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public void save(TaskDto t) {
+        if (t.getTitle() == null || t.getTitle().trim().isEmpty()) {
+            throw new IllegalArgumentException("Task title cannot be null or empty");
+        }
+
+        if (t.getCreationDate() == null) {
+            t.setCreationDate(LocalDate.now());
+        }
+        if (t.getPriority() == null) {
+            t.setPriority(assignPriority(t.getLimitDate()));
+        }
+
         Task Task = TaskMapper.mapFrom(t);
         repository.save(Task);
     }
@@ -73,6 +84,11 @@ public class TaskServiceImpl implements TaskService {
         }
 
         LocalDate currentDate = LocalDate.now();
+
+        if (limitDate.isBefore(currentDate)) {
+            return Priority.HIGH;
+        }
+
         long deadline = ChronoUnit.DAYS.between(currentDate, limitDate);
 
         if (deadline <= 3) {
@@ -88,8 +104,8 @@ public class TaskServiceImpl implements TaskService {
     public TaskDto focusMode(int id) {
         Task task = repository.findById(id).orElseThrow();
 
-        isInFocusMode = true;
-        focusTaskId = id;
+        this.isInFocusMode = true;
+        this.focusTaskId = id;
         return TaskMapper.mapFrom(task);
     }
 
@@ -153,9 +169,9 @@ public class TaskServiceImpl implements TaskService {
     public List<TaskDto> getTasksSortedByPriority() {
         return repository.findAll().stream()
                 .sorted(Comparator
-                        .comparing(Task::getPriority)
-                        .thenComparing(Task::getLimitDate, Comparator.nullsLast(Comparator.naturalOrder()))
-                        .thenComparing(Task::getCreationDate, Comparator.nullsLast(Comparator.naturalOrder())))
+                        .comparing(Task::getPriority,Comparator.nullsFirst(Comparator.naturalOrder()))
+                        .thenComparing(Task::getLimitDate, Comparator.nullsFirst(Comparator.naturalOrder()))
+                        .thenComparing(Task::getCreationDate, Comparator.nullsFirst(Comparator.naturalOrder())))
                 .map(TaskMapper::mapFrom)
                 .toList();
     }
@@ -164,9 +180,9 @@ public class TaskServiceImpl implements TaskService {
     public List<TaskDto> getTasksSortedByDueDate() {
         return repository.findAll().stream()
                 .sorted(Comparator
-                        .comparing(Task::getLimitDate, Comparator.nullsLast(Comparator.naturalOrder()))
-                        .thenComparing(Task::getPriority)
-                        .thenComparing(Task::getCreationDate))
+                        .comparing(Task::getLimitDate, Comparator.nullsFirst(Comparator.naturalOrder()))
+                        .thenComparing(Task::getPriority, Comparator.nullsFirst(Comparator.naturalOrder()))
+                        .thenComparing(Task::getCreationDate, Comparator.nullsFirst(Comparator.naturalOrder())))
                 .map(TaskMapper::mapFrom)
                 .toList();
     }
@@ -175,10 +191,11 @@ public class TaskServiceImpl implements TaskService {
     public List<TaskDto> getTasksSortedByCompletionStatus() {
         return repository.findAll().stream()
                 .sorted(Comparator
-                        .comparing(Task::isCompleted)
-                        .thenComparing(Task::getPriority)
-                        .thenComparing(Task::getLimitDate, Comparator.nullsLast(Comparator.naturalOrder())))
+                        .comparing(Task::isCompleted, Comparator.nullsFirst(Comparator.naturalOrder()))
+                        .thenComparing(Task::getPriority, Comparator.nullsFirst(Comparator.naturalOrder()))
+                        .thenComparing(Task::getLimitDate, Comparator.nullsFirst(Comparator.naturalOrder())))
                 .map(TaskMapper::mapFrom)
                 .toList();
+
     }
 }

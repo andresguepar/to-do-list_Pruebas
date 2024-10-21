@@ -7,7 +7,20 @@ import java.util.List;
 
 public class TaskMapper {
     public static TaskDto mapFrom(Task source){
-        return new TaskDto(source.getId(),
+        return TaskDto.builder()
+                .id(source.getId())
+                .title(source.getTitle())
+                .description(source.getDescription())
+                .priority(source.getPriority())
+                .creationDate(source.getCreationDate())
+                .limitDate(source.getLimitDate())
+                .completed(source.isCompleted())
+                .rewardLevel(source.getRewardLevel())
+                .build();
+    }
+
+    public static Task mapFrom(TaskDto source){
+        return new Task(source.getId(),
                 source.getTitle(),
                 source.getDescription(),
                 source.getPriority(),
@@ -16,19 +29,6 @@ public class TaskMapper {
                 source.isCompleted(),
                 source.getCompletedDate(),
                 source.getRewardLevel()
-          );
-    }
-
-    public static Task mapFrom(TaskDto source){
-        return new Task(source.id(),
-                source.title(),
-                source.description(),
-                source.priority(),
-                source.creationDate(),
-                source.limitDate(),
-                source.completed(),
-                source.completedDate(),
-                source.rewardLevel()
 
            );
     }

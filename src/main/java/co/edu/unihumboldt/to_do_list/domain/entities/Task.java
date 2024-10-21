@@ -29,6 +29,4 @@ public class Task {
     private boolean completed;
     private LocalDate completedDate;
     private int rewardLevel;
-
-
 }

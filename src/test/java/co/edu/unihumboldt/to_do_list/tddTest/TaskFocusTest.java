@@ -66,11 +66,11 @@ public class TaskFocusTest {
         List<TaskDto> visibleTasks = service.getVisibleTasks();
 
         assertNotNull(focusedTask, "La tarea seleccionada no debe ser null");
-        assertEquals("Hacer tarea", focusedTask.title(),
+        assertEquals("Hacer tarea", focusedTask.getTitle(),
                 "La tarea enfocada debe ser Hacer Tarea");
         assertEquals(1,visibleTasks.size(),
                 "Solo debe mostrase la tarea seleccionada");
-        assertEquals(focusedTask.id(), visibleTasks.get(0).id(),
+        assertEquals(focusedTask.getId(), visibleTasks.get(0).getId(),
                 "La tarea visible debe ser la tarea seleccionada");
     }
 
