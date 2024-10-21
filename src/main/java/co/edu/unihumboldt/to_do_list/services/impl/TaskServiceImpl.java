@@ -14,6 +14,14 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+/**
+ * Implementación del servicio de tareas, que proporciona la lógica de negocio
+ * para la gestión de tareas. Incluye métodos para listar, obtener por ID, guardar,
+ * actualizar y eliminar tareas. También maneja la asignación de prioridades basadas
+ * en fechas límite y proporciona estadísticas sobre las tareas. Soporta un modo
+ * de enfoque para visualizar una tarea específica y permite la obtención de tareas
+ * ordenadas por prioridad, fecha de vencimiento y estado de completado.
+ */
 
 @Service
 public class TaskServiceImpl implements TaskService {
