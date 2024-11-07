@@ -48,7 +48,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public void save(TaskDto t) {
+    public TaskDto save(TaskDto t) {
         if (t.getTitle() == null || t.getTitle().trim().isEmpty()) {
             throw new IllegalArgumentException("Task title cannot be null or empty");
         }
@@ -60,8 +60,9 @@ public class TaskServiceImpl implements TaskService {
             t.setPriority(assignPriority(t.getLimitDate()));
         }
 
-        Task Task = TaskMapper.mapFrom(t);
-        repository.save(Task);
+        Task task = TaskMapper.mapFrom(t);
+        repository.save(task);
+        return t;
     }
 
     @Override

@@ -5,179 +5,128 @@ import co.edu.unihumboldt.to_do_list.mapping.dtos.TaskDto;
 import co.edu.unihumboldt.to_do_list.mapping.dtos.TaskStatsDto;
 import co.edu.unihumboldt.to_do_list.services.impl.TaskServiceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.stereotype.Controller;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-@Controller
-@RequestMapping("/task")
+@RestController
+@RequestMapping("/api/tasks")
 public class TaskController {
-    public final TaskServiceImpl service;
+    private final TaskServiceImpl service;
 
     public TaskController(TaskServiceImpl service) {
         this.service = service;
     }
-    // 1.Listar Tareas Creadas
-    @GetMapping("/list")
-    public ModelAndView listTask(){
-        ModelAndView modelAndView = new ModelAndView("taskList");
-        modelAndView.addObject("task", service.list());
-        return modelAndView;
+
+    @GetMapping
+    public ResponseEntity<List<TaskDto>> listTasks() {
+        return ResponseEntity.ok(service.list());
     }
-    // 2.Crear Tareas
-    @GetMapping("/create")
-    public ModelAndView showCreateForm(){
-        return new ModelAndView("formTask").addObject("task", new TaskDto());
-    }
-    @PostMapping("/new")
-    public String createNewtask(@ModelAttribute TaskDto taskDto,
-                                RedirectAttributes redirectAttributes){
+
+    @PostMapping
+    public ResponseEntity<TaskDto> createTask(@RequestBody TaskDto taskDto) {
         try {
-            service.save(taskDto);
-            redirectAttributes.addFlashAttribute("success", "Task created successfully.");
+            TaskDto createdTask = service.save(taskDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error creating the task.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        return "redirect:/task/create";
     }
 
-    // 2.Actualizar Tareas
-    @GetMapping("/update-form/{id}")
-    public ModelAndView showUpdateForm(@PathVariable("id") int id,
-                                       RedirectAttributes redirectAttributes) {
-        ModelAndView modelAndView = new ModelAndView("formTaskUpdate");
-
+    @GetMapping("/{id}")
+    public ResponseEntity<TaskDto> getTaskById(@PathVariable("id") int id) {
         Optional<TaskDto> taskDto = Optional.ofNullable(service.byId(id));
-
-        if (taskDto.isPresent()) {
-            modelAndView.addObject("task", taskDto.get());
-        } else {
-            redirectAttributes.addFlashAttribute("error", "Task not found.");
-            modelAndView.setViewName("redirect:/task/list");
-        }
-        return modelAndView;
+        return taskDto.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
-    @PostMapping("/update")
-    public String updateTask(@ModelAttribute TaskDto taskDto, RedirectAttributes redirectAttributes) {
 
-        Optional<TaskDto> existingTask = Optional.ofNullable(service.byId(taskDto.getId()));
-
+    @PutMapping("/{id}")
+    public ResponseEntity<TaskDto> updateTask(@PathVariable("id") int id, @RequestBody TaskDto taskDto) {
+        Optional<TaskDto> existingTask = Optional.ofNullable(service.byId(id));
         if (existingTask.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Task not found.");
-            return "redirect:/task/list";
+            return ResponseEntity.notFound().build();
         }
-
-        service.save(taskDto);
-        redirectAttributes.addFlashAttribute("success", "Task updated successfully.");
-
-        return "redirect:/task/list";
+        TaskDto updatedTask = service.save(taskDto);
+        return ResponseEntity.ok(updatedTask);
     }
-    // 3.Eliminar Tareas
-    @PostMapping("/delete/{id}")
-    public String delete(@PathVariable("id")Integer id){
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTask(@PathVariable("id") Integer id) {
         service.delete(id);
-        return "redirect:/task/list";
-    }
-    // 4. Asignar prioridad según la fecha límite
-    @GetMapping("/assign-priority")
-    public Priority assignPriority(@RequestParam("limitDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate limitDate) {
-        return service.assignPriority(limitDate);
+        return ResponseEntity.noContent().build();
     }
 
-    // 5. Activar modo enfoque para una tarea específica
-    @PostMapping("/focus-mode/{id}")
-    public String enterFocusMode(@PathVariable int id, RedirectAttributes redirectAttributes) {
-        try{
+    @GetMapping("/priority")
+    public ResponseEntity<Priority> assignPriority(@RequestParam("limitDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate limitDate) {
+        return ResponseEntity.ok(service.assignPriority(limitDate));
+    }
+
+    @GetMapping("/focus-mode/{id}")
+    public ResponseEntity<Void> enterFocusMode(@PathVariable int id) {
+        try {
             service.focusMode(id);
-            redirectAttributes.addFlashAttribute("succes","Focus Mode Activaded for task" + id);
-
-        }catch (Exception e){
-            redirectAttributes.addFlashAttribute("error", "Error activating focus mode: " + e.getMessage());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-
-        return "redirect:/task/list";
     }
 
-    // 6. Salir del modo enfoque
-    @PostMapping("/exit-focus-mode")
-    public String exitFocusMode(RedirectAttributes redirectAttributes) {
-        try{
+    @GetMapping("/focus-mode")
+    public ResponseEntity<Void> exitFocusMode() {
+        try {
             service.exitFocusMode();
-            redirectAttributes.addFlashAttribute("succes","Focus Mode deactivaded for task");
-
-        }catch (Exception e){
-            redirectAttributes.addFlashAttribute("error", "Error deactivating focus mode: " + e.getMessage());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-
-        return "redirect:/task/list";
     }
 
-    // 7. Obtener tareas visibles (según si está en modo enfoque o no)
     @GetMapping("/visible")
-    public List<TaskDto> getVisibleTasks() {
-        return service.getVisibleTasks();
+    public ResponseEntity<List<TaskDto>> getVisibleTasks() {
+        return ResponseEntity.ok(service.getVisibleTasks());
     }
 
-    // 8. Obtener estadísticas de tareas
     @GetMapping("/stats")
-    public TaskStatsDto getTaskStats() {
-        return service.getStats();
+    public ResponseEntity<TaskStatsDto> getTaskStats() {
+        return ResponseEntity.ok(service.getStats());
     }
 
-    // 9. Obtener tareas ordenadas por prioridad
     @GetMapping("/sorted-by-priority")
-    public ModelAndView getTasksSortedByPriority() {
+    public ResponseEntity<List<TaskDto>> getTasksSortedByPriority() {
         try {
             List<TaskDto> tasks = service.getTasksSortedByPriority();
-            ModelAndView modelAndView = new ModelAndView("taskList");
-            modelAndView.addObject("task",tasks);
-            modelAndView.addObject("stats",service.getStats());
-            return modelAndView;
-        }catch (Exception e) {
-            ModelAndView modelAndView = new ModelAndView("redirect:/task/list");
-            modelAndView.addObject("error", "Error sorting tasks by priority");
-            return modelAndView;
+            return ResponseEntity.ok(tasks);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    // 10. Obtener tareas ordenadas por fecha de vencimiento
     @GetMapping("/sorted-by-due-date")
-    public ModelAndView getTasksSortedByDueDate() {
+    public ResponseEntity<List<TaskDto>> getTasksSortedByDueDate() {
         try {
             List<TaskDto> tasks = service.getTasksSortedByDueDate();
-            ModelAndView modelAndView = new ModelAndView("taskList");
-            modelAndView.addObject("task", tasks);
-            modelAndView.addObject("stats", service.getStats());
-            return modelAndView;
+            return ResponseEntity.ok(tasks);
         } catch (Exception e) {
-            ModelAndView modelAndView = new ModelAndView("redirect:/task/list");
-            modelAndView.addObject("error", "Error sorting tasks by due date");
-            return modelAndView;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    // 11. Obtener tareas ordenadas por estado de finalización
     @GetMapping("/sorted-by-completion-status")
-    public ModelAndView getTasksSortedByCompletionStatus() {
+    public ResponseEntity<List<TaskDto>> getTasksSortedByCompletionStatus() {
         try {
             List<TaskDto> sortedTasks = service.getTasksSortedByCompletionStatus();
-            ModelAndView modelAndView = new ModelAndView("taskList");
-            modelAndView.addObject("task", sortedTasks);
-            modelAndView.addObject("stats", service.getStats()); // Añadimos las estadísticas para el modal de stats
-            return modelAndView;
+            return ResponseEntity.ok(sortedTasks);
         } catch (Exception e) {
-            ModelAndView modelAndView = new ModelAndView("redirect:/task/list");
-            modelAndView.addObject("error", "Error sorting tasks by completion status");
-            return modelAndView;
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    @PostMapping("/toggle-complete/{id}")
-    public String toggleComplete(@PathVariable("id") Integer id, RedirectAttributes redirectAttributes) {
+
+    @PutMapping("/{id}/toggle-complete")
+    public ResponseEntity<TaskDto> toggleComplete(@PathVariable("id") Integer id) {
         try {
             TaskDto task = service.byId(id);
             task.setCompleted(!task.isCompleted());
@@ -186,11 +135,10 @@ public class TaskController {
             } else {
                 task.setCompletedDate(null);
             }
-            service.save(task);
-            redirectAttributes.addFlashAttribute("success", "Task status updated successfully.");
+            TaskDto updatedTask = service.save(task);
+            return ResponseEntity.ok(updatedTask);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error updating task status.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        return "redirect:/task/list";
     }
 }

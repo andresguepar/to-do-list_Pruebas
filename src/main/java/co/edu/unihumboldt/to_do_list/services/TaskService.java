@@ -17,7 +17,7 @@ import java.util.List;
 public interface TaskService {
     List<TaskDto> list();
     TaskDto byId(int id);
-    void save(TaskDto t);
+    TaskDto save(TaskDto t);
     void update(int id, TaskDto updated);
     void delete(int id);
     Priority assignPriority(LocalDate limitDate);
