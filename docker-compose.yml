@@ -2,20 +2,14 @@ version: '3.8'
 
 services:
   db:
+    container_name: todolist-mysql
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "3306:3306"
-    environment:
-      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-      - MYSQL_DATABASE=todolist
-    volumes:
-      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root"]
-      timeout: 20s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
       retries: 10
-
-volumes:
-  mysql_data:

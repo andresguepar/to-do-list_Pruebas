@@ -8,12 +8,18 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 import io.restassured.common.mapper.TypeRef;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
 public class ApiRestTest {
+
+    @BeforeAll
+    public static void setup() {
+        baseURI = "http://localhost:8080/api/tasks";
+    }
 
     @Test
     public void testStatsTask(){
