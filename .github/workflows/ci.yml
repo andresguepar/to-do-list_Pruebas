@@ -37,10 +37,14 @@ jobs:
           distribution: 'corretto'
           cache: 'maven'
       
-      # Inicializar la base de datos con init.sql
+      # Inicializar la base de datos
       - name: Initialize Database
         run: |
-          mysql --protocol=TCP -h"127.0.0.1" -P"3306" -uroot < init.sql
+          mysql --protocol=TCP -h"127.0.0.1" -P"3306" -uroot -e "
+          CREATE DATABASE IF NOT EXISTS todolist;
+          USE todolist;
+          SOURCE init.sql;
+          "
       
       - name: Build with Maven
         run: mvn -B clean package -DskipTests
