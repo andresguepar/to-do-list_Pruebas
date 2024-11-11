@@ -12,6 +12,20 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: todolist
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -26,8 +40,23 @@ jobs:
       # Inicializar la base de datos
       - name: Initialize Database
         run: |
-          sudo apt-get update
-          sudo apt-get install -y default-mysql-client
+          echo "Waiting for MySQL to start..."
+          attempts=0
+          max_attempts=30
+          until mysql --protocol=TCP -h"127.0.0.1" -P"3306" -uroot -e "SELECT 1" >/dev/null || [ $attempts -eq $max_attempts ]
+          do
+            attempts=$((attempts + 1))
+            echo "Attempt $attempts of $max_attempts..."
+            sleep 2
+          done
+          
+          if [ $attempts -eq $max_attempts ]; then
+            echo "MySQL failed to start after $max_attempts attempts"
+            exit 1
+          fi
+          
+          echo "MySQL is ready!"
+
           mysql --protocol=TCP -h"127.0.0.1" -P"3306" -uroot -e "
           CREATE DATABASE IF NOT EXISTS todolist;
           USE todolist;
@@ -62,7 +91,7 @@ jobs:
           echo "Waiting for Spring Boot to start..."
           attempts=0
           max_attempts=30
-          until curl -s http://localhost:8080/api/tasks/stats >/dev/null || [ $attempts -eq $max_attempts ]
+          until curl -s http:// localhost:8080/api/tasks/stats >/dev/null || [ $attempts -eq $max_attempts ]
           do
             attempts=$((attempts + 1))
             echo "Attempt $attempts of $max_attempts..."
