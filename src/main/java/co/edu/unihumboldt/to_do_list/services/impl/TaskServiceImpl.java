@@ -168,6 +168,7 @@ public class TaskServiceImpl implements TaskService {
                         t.getCompletedDate() != null &&
                         !t.getCompletedDate().isAfter(t.getLimitDate()))
                 .count());
+
         stats.setOverDueTasks(allTasks.stream()
                 .filter(t -> !t.isCompleted() &&
                         t.getLimitDate().isBefore(today))

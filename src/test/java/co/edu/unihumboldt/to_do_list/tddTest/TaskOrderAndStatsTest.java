@@ -43,7 +43,7 @@ public class TaskOrderAndStatsTest {
                 "Estudiar para el examen",  // description
                 Priority.HIGH,              // priority
                 LocalDate.now(),            // creationDate
-                LocalDate.of(2024, 10, 21), // limitDate
+                LocalDate.of(2024, 11, 21), // limitDate
                 false,                      // completed
                 null,                       // completedDate
                 1                           // rewardLevel
@@ -55,7 +55,7 @@ public class TaskOrderAndStatsTest {
                 "Maratón de series",        // description
                 Priority.LOW,               // priority
                 LocalDate.now(),            // creationDate
-                LocalDate.of(2024, 10, 22), // limitDate
+                LocalDate.of(2024, 12, 22), // limitDate
                 false,                      // completed
                 null,                       // completedDate
                 1                           // rewardLevel
