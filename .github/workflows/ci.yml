@@ -40,10 +40,46 @@ jobs:
       # Inicializar la base de datos
       - name: Initialize Database
         run: |
+          echo "Waiting for MySQL to start..."
+          attempts=0
+          max_attempts=30
+          until mysql --protocol=TCP -h"127.0.0.1" -P"3306" -uroot -e "SELECT 1" >/dev/null || [ $attempts -eq $max_attempts ]
+          do
+            attempts=$((attempts + 1))
+            echo "Attempt $attempts of $max_attempts..."
+            sleep 2
+          done
+          
+          if [ $attempts -eq $max_attempts ]; then
+            echo "MySQL failed to start after $max_attempts attempts"
+            exit 1
+          fi
+          
+          echo "MySQL is ready!"
+
           mysql --protocol=TCP -h"127.0.0.1" -P"3306" -uroot -e "
           CREATE DATABASE IF NOT EXISTS todolist;
           USE todolist;
-          SOURCE init.sql;
+          CREATE TABLE IF NOT EXISTS tasks (
+            id SERIAL PRIMARY KEY,
+            completed BOOLEAN,
+            completed_date DATE,
+            creation_date DATE,
+            description TEXT,
+            limit_date DATE,
+            priority VARCHAR(10),
+            reward_level INT,
+            title VARCHAR(255)
+          );
+
+          INSERT INTO tasks (completed, completed_date, creation_date, description, limit_date, priority, reward_level, title) VALUES
+          (FALSE, NULL, '2024-10-20', 'Paginas 12', '2024-10-22', 'HIGH', 1, 'Leer Libro'),
+          (TRUE, '2024-10-20', '2024-10-20', 'Paginas 11222', '2024-10-22', 'HIGH', 2, 'Hacer Tarea'),
+          (FALSE, NULL, NULL, '', '2024-10-21', 'MEDIUM', 2, 'Something'),
+          (TRUE, '2024-10-23', '2024-10-23', 'ssss', '2024-10-24', 'MEDIUM', 1, 'Tas'),
+          (TRUE, NULL, '2024-10-23', 'Si', '2024-10-30', 'MEDIUM', 4, 'Estudiar'),
+          (FALSE, NULL, '2024-10-23', 'Hola', '2024-10-30', 'MEDIUM', 1, 'Hola'),
+          (FALSE, NULL, '2024-10-23', '', '2024-10-24', 'HIGH', 1, 'Si');
           "
       
       - name: Build with Maven
@@ -55,7 +91,7 @@ jobs:
           echo "Waiting for Spring Boot to start..."
           attempts=0
           max_attempts=30
-          until curl -s http://localhost:8080/api/tasks/stats >/dev/null || [ $attempts -eq $max_attempts ]
+          until curl -s http:// localhost:8080/api/tasks/stats >/dev/null || [ $attempts -eq $max_attempts ]
           do
             attempts=$((attempts + 1))
             echo "Attempt $attempts of $max_attempts..."
@@ -64,7 +100,6 @@ jobs:
           
           if [ $attempts -eq $max_attempts ]; then
             echo "Application failed to start after $max_attempts attempts"
-            cat nohup.out
             exit 1
           fi
           
