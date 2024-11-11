@@ -44,9 +44,25 @@ public class ApiRestTest {
                     .body("averageRewardLevel", equalTo(1.7142857142857142f));
 
     }
+    @Test
+    public void testGetTasks(){
+        baseURI = "http://localhost:8080/api/tasks";
+
+
+        List<Map<String, Object>> tasks = get("").as(new TypeRef<List<Map<String, Object>>>() {});
+
+        assertThat(tasks, hasSize(7));
+        assertThat(tasks.get(0).get("id"), equalTo(1));
+        assertThat(tasks.get(1).get("id"), equalTo(2));
+        assertThat(tasks.get(2).get("id"), equalTo(3));
+        assertThat(tasks.get(3).get("id"), equalTo(4));
+        assertThat(tasks.get(4).get("id"), equalTo(5));
+        assertThat(tasks.get(5).get("id"), equalTo(9));
+        assertThat(tasks.get(6).get("id"), equalTo(10));
+
+    }
 
     @Test
-
     public void testSortedByPriorityTask(){
         baseURI = "http://localhost:8080/api/tasks";
 
@@ -65,7 +81,6 @@ public class ApiRestTest {
     }
 
     @Test
-
     public void testSortedByCompletionTask() {
         baseURI = "http://localhost:8080/api/tasks";
 
@@ -82,7 +97,6 @@ public class ApiRestTest {
     }
 
     @Test
-
     public void testSortedByDueDateTask() {
         baseURI = "http://localhost:8080/api/tasks";
 
