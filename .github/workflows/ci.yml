@@ -9,22 +9,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
-          MYSQL_DATABASE: todolist
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -u root"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-        volumes:
-          - ${{ github.workspace }}/init.sql:/docker-entrypoint-initdb.d/init.sql
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -35,6 +19,11 @@ jobs:
           java-version: '17'
           distribution: 'corretto'
           cache: 'maven'
+          
+      - name: Start MySQL with Docker Compose
+        run: |
+          docker-compose up -d --build
+          echo "MySQL is ready!"
           
       - name: Build with Maven
         run: mvn -B clean package -DskipTests
@@ -52,3 +41,7 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/todolist
           SPRING_DATASOURCE_USERNAME: root
           SPRING_DATASOURCE_PASSWORD: ''
+          
+      - name: Cleanup
+        if: always()
+        run: docker-compose down
